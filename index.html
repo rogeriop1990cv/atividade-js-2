@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Como usamos exception?</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <header class="m-4">
+      <h1 class="text-center">Formulário de criação de novos funcionários</h1>
+    </header>
+
+    <aside>
+      <div id="notificationContainer" class="position-fixed top-10 end-0 p-3" style="z-index: 11">
+        <div
+          id="errorNotification"
+          class="toast hide bg-danger text-white"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div class="toast-header">
+            <strong class="me-auto">Erro</strong>
+            <small class="text-muted">Agora</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div id="error-mensagem" class="toast-body">Ocorreu um erro. Por favor, tente novamente mais tarde.</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="container mt-3 mb-5 border p-3 rounded" style="max-width: 600px">
+      <form class="row g-3">
+        <div class="col-md-8">
+          <label for="nome" class="form-label">Nome:</label>
+          <input type="text" class="form-control" id="nome" name="nome" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="idade">Idade:</label>
+          <input class="form-control" type="number" id="idade" name="idade" />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" for="cargo">Cargo:</label>
+          <select id="cargo" class="form-select" name="cargo" id="cargo">
+            <option value="gerente">Gerente</option>
+            <option value="desenvolvedor">Desenvolvedor</option>
+          </select>
+        </div>
+
+        <div id="cargo-selecionado" class="col-md-12">
+          <label class="form-label" for="departamento">Departamento:</label>
+          <input class="form-control" type="text" id="departamento" name="departamento" />
+        </div>
+
+        <div class="col-md-6">
+          <button class="btn btn-primary w-50" type="submit">Enviar</button>
+        </div>
+      </form>
+    </main>
+
+    <section id="add-novo-funcionario" class="container mb-5" style="max-width: 630px"></section>
+
+    <footer class="footer fixed-bottom">
+      <div class="d-flex justify-content-center align-items-center bg-dark text-bg-primary">
+        <p class="text-center m-2">Desenvolvido por Rogério P. Da Silva - 2023</p>
+      </div>
+    </footer>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      class Funcionario {
+        constructor(nome, idade, cargo) {
+          this.nome = nome;
+          this.idade = idade;
+          this.cargo = cargo;
+        }
+
+        seApresentar() {
+          return `Olá, eu sou o ${this.nome}, tenho ${this.idade} anos e sou ${this.cargo}.`;
+        }
+
+        trabalhar() {
+          return `Estou trabalhando como ${this.cargo}.`;
+        }
+      }
+
+      class Gerente extends Funcionario {
+        constructor(nome, idade, cargo, departamento) {
+          super(nome, idade, cargo);
+          this.departamento = departamento;
+        }
+
+        gerenciar() {
+          return `Estou gerenciando o departamento ${this.departamento}.`;
+        }
+      }
+
+      class Desenvolvedor extends Funcionario {
+        constructor(nome, idade, cargo, linguagem) {
+          super(nome, idade, cargo);
+          this.linguagem = linguagem;
+        }
+
+        programar() {
+          return `Estou programando em ${this.linguagem}.`;
+        }
+      }
+
+      function exibirErro(erro) {
+        const errorMensagem = document.querySelector("#error-mensagem");
+        errorMensagem.textContent = erro.message;
+        const errorNotification = new bootstrap.Toast(document.getElementById("errorNotification"));
+        errorNotification.show();
+      }
+
+      const handleSubmit = (event) => {
+        try {
+          event.preventDefault();
+
+          var funcionario;
+          const addNovoFuncionario = document.querySelector("#add-novo-funcionario");
+          const cargoSelecionado = document.querySelector("#cargo-selecionado");
+
+          const formData = new FormData(event.target);
+
+          const nome = formData.get("nome");
+          const idade = formData.get("idade");
+          const cargo = formData.get("cargo");
+          const departamento = formData.get("departamento");
+          const linguagem = formData.get("linguagem");
+
+          if (
+            !nome ||
+            !idade ||
+            !cargo ||
+            (!departamento && cargo === "gerente") ||
+            (!linguagem && cargo === "desenvolvedor")
+          ) {
+            throw new Error("Todos os campos são obrigatórios.");
+          }
+
+          if (cargo === "gerente") {
+            funcionario = new Gerente(nome, idade, cargo, departamento);
+          } else {
+            funcionario = new Desenvolvedor(nome, idade, cargo, linguagem);
+          }
+
+          if (funcionario instanceof Gerente) {
+            funcionario.funcao = funcionario.gerenciar();
+          } else {
+            funcionario.funcao = funcionario.programar();
+          }
+
+          addNovoFuncionario.innerHTML += `
+        <div class="card text-bg-light m-2">
+              <div class="card-header text-capitalize ">${cargo}</div>
+              <div class="card-body">
+                <h5 class="card-title text-center">Apresentação</h5>
+                <p class="card-text">${funcionario.seApresentar()}</p>
+                <p class="card-text">${funcionario.trabalhar()}</p>
+                <p class="card-text">${funcionario.funcao}</p>
+              </div>
+            </div>
+        `;
+
+          event.target.reset();
+          cargoSelecionado.innerHTML = `
+        <label class="form-label" for="departamento">Departamento:</label>
+        <input class="form-control" type="text" id="departamento" name="departamento" />
+        `;
+        } catch (error) {
+          exibirErro(error);
+        }
+      };
+
+      const handleCargo = () => {
+        const cargoSelecionado = document.querySelector("#cargo-selecionado");
+        const cargo = document.querySelector("#cargo").value;
+
+        if (cargo === "gerente") {
+          cargoSelecionado.innerHTML = `
+          <label class="form-label" for="departamento">Departamento:</label>
+          <input class="form-control" type="text" id="departamento" name="departamento" />
+          `;
+        } else {
+          cargoSelecionado.innerHTML = `
+          <label class="form-label" for="linguagem">Linguagem:</label>
+          <input class="form-control" type="text" id="linguagem" name="linguagem" />
+          `;
+        }
+      };
+
+      document.querySelector("form").addEventListener("submit", handleSubmit);
+      document.querySelector("#cargo").addEventListener("change", handleCargo);
+    </script>
+  </body>
+</html>
